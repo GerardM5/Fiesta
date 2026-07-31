@@ -37,14 +37,9 @@
 .wheel-item span{display:block;width:90px;transform:translateX(-38px)}
 .wheel-center{position:absolute;width:25%;aspect-ratio:1;background:#fff;color:#2a4227;border-radius:50%;display:grid;place-items:center;border:8px solid #dcebd5}
 .wheel-pointer{position:absolute;z-index:1;top:-6px;border-left:16px solid transparent;border-right:16px solid transparent;border-top:28px solid #ff6b5f}
-.result-view{flex:1;width:min(1120px,100%);margin:auto;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(32px,7vw,100px);padding:45px}
-.result-image{position:relative;height:min(54vw,540px);overflow:hidden;border-radius:20px;box-shadow:0 25px 60px #0004}
-.result-image:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#10250dcc,transparent 60%)}
-.result-image img{width:100%;height:100%;object-fit:cover}
-.result-label{position:absolute;z-index:1;left:22px;bottom:20px;background:#bdff7b;color:#1a2e18;padding:8px 12px;font-weight:800;font-size:11px;letter-spacing:.12em;border-radius:6px}
-.result-copy h1{font-size:clamp(48px,6.5vw,88px);line-height:.98;letter-spacing:-.07em;margin:0 0 22px}
-.result-copy>p:last-child{font-size:clamp(17px,1.7vw,23px);line-height:1.5;color:#d3dfd0;max-width:540px}
-.loser-pill{position:absolute;top:96px;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;padding:9px 15px;border-radius:100px;font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center}
+.result-view{flex:1;width:min(1180px,100%);margin:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:45px}
+.result-view h1{font-size:clamp(56px,9vw,146px);line-height:.94;letter-spacing:-.075em;margin:0;max-width:1100px}
+.result-view p{font-size:clamp(18px,2.1vw,30px);line-height:1.4;color:#d3dfd0;max-width:790px;margin:30px 0 0}
 .loser-reveal{border:2px solid;border-radius:20px;width:min(450px,100%);padding:42px;background:#ffffff0b}
 .loser-reveal>span{display:grid;place-items:center;width:80px;height:80px;border-radius:50%;font-weight:800;font-size:34px;margin:auto}
 .loser-reveal strong{display:block;font-size:38px;letter-spacing:-.05em;margin:17px 0 7px}

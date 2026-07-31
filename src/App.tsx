@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, ShieldAlert, Trash2, Trophy, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, Trash2, Trophy, X } from "lucide-react";
 import { Wheel as RouletteWheel } from "react-custom-roulette";
 import { initialData, readData, saveData, selectWithoutRepeats, teamById } from "./data";
 import type { Activity, AppData, GamePhase, TeamId } from "./types";
@@ -54,9 +54,8 @@ function TV({ data, update }: { data: AppData; update: (next: AppData | ((state:
     {data.phase === "HOME" && <section className="tv-home"><p className="eyebrow">NOCHE DE JUEGOS</p><h1>{data.eventName}</h1><p className="lead">Dos equipos. Retos inesperados.<br />Una noche para recordar.</p><div className="tv-teams">{data.teams.map((team, i) => <TeamCard key={team.id} team={team} number={i + 1} />)}</div><p className="tv-hint"><CircleDot size={18} /> Esperando al panel de control</p></section>}
     {(data.phase === "MINIGAME_WHEEL" || data.phase === "PUNISHMENT_WHEEL") && <section className="wheel-view"><p className="eyebrow">{data.phase === "PUNISHMENT_WHEEL" ? "EL DESTINO DECIDE" : "SIGUIENTE RETO"}</p><h1>{data.phase === "PUNISHMENT_WHEEL" ? "Ruleta de castigos" : "Ruleta de minijuegos"}</h1><SpinWheel items={wheelItems} selectedId={data.phase === "PUNISHMENT_WHEEL" ? data.selectedPunishmentId : data.selectedMinigameId} onFinished={holdWinningOption} isRevealing={isRevealing} /><p className={`tv-hint ${isRevealing ? "wheel-hint-reveal" : ""}`}><CircleDot size={18} /> {isRevealing ? "La opción ganadora se mantiene en pantalla…" : data.selectedMinigameId || data.selectedPunishmentId ? "La suerte está decidiendo…" : "Esperando el giro del panel"}</p></section>}
     {(data.phase === "MINIGAME_RESULT" || data.phase === "PUNISHMENT_RESULT") && activity && <section className="result-view">
-      {data.phase === "PUNISHMENT_RESULT" && loser && <div className="loser-pill" style={{ background: loser.color }}><ShieldAlert size={18} /> {loser.name} pierde esta ronda</div>}
-      <div className="result-image"><img src={activity.imageUrl} alt="" /><span className="result-label">{data.phase === "MINIGAME_RESULT" ? "MINIJUEGO" : "CASTIGO"}</span></div>
-      <div className="result-copy"><p className="eyebrow">{data.phase === "MINIGAME_RESULT" ? "A JUGAR" : "EL VEREDICTO"}</p><h1>{activity.title}</h1><p>{activity.description}</p></div>
+      <h1>{activity.title}</h1>
+      <p>{activity.description}</p>
     </section>}
     {(data.phase === "SELECT_LOSER" || data.phase === "LOSER_RESULT") && <section className="loser-view"><p className="eyebrow">RESULTADO DEL RETO</p><h1>{data.phase === "SELECT_LOSER" ? "¿Quién ha perdido?" : "Esta vez cae…"}</h1>{loser ? <div className="loser-reveal" style={{ borderColor: loser.color }}><span style={{ background: loser.color }}>{loser.name.slice(0, 1)}</span><strong>{loser.name}</strong><p>El destino tiene algo preparado.</p></div> : <div className="tv-teams">{data.teams.map((team, i) => <TeamCard key={team.id} team={team} number={i + 1} />)}</div>}</section>}
     <footer className="tv-footer"><span>Ronda en curso</span><span>{phases[data.phase]}</span><OpenAdmin /></footer>
