@@ -64,12 +64,38 @@ function TV({ data, update }: { data: AppData; update: (next: AppData | ((state:
 }
 
 function TeamCard({ team, number }: { team: AppData["teams"][number]; number: number }) { return <article className="team-card" style={{ "--team": team.color } as React.CSSProperties}><span className="team-number">0{number}</span><span className="team-dot" /><h2>{team.name}</h2><p>¡A por todas!</p></article>; }
-const wheelColors = ["#bdff7b", "#f8f6e9", "#8eb987", "#e9f5e5", "#5e8759", "#d1e8c8"];
+const lightWheelPalette = ["#e7f5d6", "#fff1c9", "#d9f2ee", "#f9dfe8", "#e9e1fa", "#dceaff", "#fde6c4", "#e2f3d3", "#f5e1ce", "#dcedf6", "#f6e0f2", "#e9f0c9"];
+const wheelLabels: Record<string, string> = {
+  "Teléfono escacharrado": "Teléfono roto",
+  "Mímica imposible": "Mímica",
+  "Mímica relámpago": "Mímica flash",
+  "Acaba la canción": "Sigue la canción",
+  "Dos verdades y una mentira": "Dos verdades",
+  "Piedra, papel o tijera mundial": "Piedra, papel, tijera",
+};
+
+function shuffledWheelPalette() {
+  const palette = [...lightWheelPalette];
+  for (let index = palette.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [palette[index], palette[randomIndex]] = [palette[randomIndex], palette[index]];
+  }
+  return palette;
+}
+
 function SpinWheel({ items, selectedId, onFinished, compact = false, isRevealing = false }: { items: Activity[]; selectedId: string | null; onFinished: () => void; compact?: boolean; isRevealing?: boolean }) {
-  const data = useMemo(() => items.map((item, index) => ({ option: item.title, style: { backgroundColor: wheelColors[index % wheelColors.length], textColor: index % wheelColors.length === 4 ? "#ffffff" : "#193116" } })), [items]);
+  const [colors, setColors] = useState(shuffledWheelPalette);
+  useEffect(() => {
+    if (selectedId) setColors(shuffledWheelPalette());
+  }, [selectedId]);
+  const data = useMemo(() => items.map((item, index) => {
+    const label = wheelLabels[item.title] ?? item.title;
+    const fontSize = compact ? (label.length > 16 ? 8 : 9) : (label.length > 16 ? 11 : 13);
+    return { option: label, style: { backgroundColor: colors[index % colors.length], textColor: "#18311d", fontSize, fontWeight: "800" } };
+  }), [items, compact, colors]);
   const prizeNumber = Math.max(0, items.findIndex(item => item.id === selectedId));
   if (!items.length) return <div className="wheel-empty">No hay opciones activas</div>;
-  return <div className={`roulette-wrap ${compact ? "roulette-compact" : ""} ${isRevealing ? "roulette-revealing" : ""}`}><RouletteWheel mustStartSpinning={Boolean(selectedId)} prizeNumber={prizeNumber} data={data} onStopSpinning={onFinished} backgroundColors={wheelColors} textColors={["#1a2e18"]} outerBorderColor="#f9fbf5" outerBorderWidth={7} innerRadius={15} innerBorderColor="#dcebd5" innerBorderWidth={5} radiusLineColor="#31512e" radiusLineWidth={2} fontFamily="Onest, sans-serif" fontSize={compact ? 11 : 18} fontWeight="700" textDistance={60} spinDuration={compact ? 0.3 : 0.6} disableInitialAnimation /></div>;
+  return <div className={`roulette-wrap ${compact ? "roulette-compact" : ""} ${isRevealing ? "roulette-revealing" : ""}`} aria-label={`Ruleta con ${items.map(item => wheelLabels[item.title] ?? item.title).join(", ")}`}><RouletteWheel mustStartSpinning={Boolean(selectedId)} prizeNumber={prizeNumber} data={data} onStopSpinning={onFinished} backgroundColors={colors} textColors={["#18311d"]} outerBorderColor="#ffffff" outerBorderWidth={7} innerRadius={15} innerBorderColor="#f7fbf4" innerBorderWidth={5} radiusLineColor="#5f7860" radiusLineWidth={2} fontFamily="Onest, sans-serif" fontSize={compact ? 9 : 13} fontWeight="800" textDistance={compact ? 64 : 62} spinDuration={compact ? 0.3 : 0.6} disableInitialAnimation /></div>;
 }
 
 function Admin({ data, update }: { data: AppData; update: (next: AppData | ((state: AppData) => AppData)) => void }) {
