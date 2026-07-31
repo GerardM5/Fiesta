@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
+    "qrcode.react": "^4.2.0",
     "react": "latest",
     "react-custom-roulette": "^1.4.1",
     "react-dom": "latest",

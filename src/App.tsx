@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, Trash2, Trophy, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, Smartphone, Trash2, Trophy, Tv, X } from "lucide-react";
 import { Wheel as RouletteWheel } from "react-custom-roulette";
+import { QRCodeSVG } from "qrcode.react";
 import { initialData, isSharedSessionConfigured, loadSharedData, saveSharedData, selectWithoutRepeats, subscribeToSharedData, teamById } from "./data";
 import type { Activity, AppData, GamePhase, TeamId } from "./types";
 
@@ -59,7 +60,7 @@ function TV({ data, update }: { data: AppData; update: (next: AppData | ((state:
   };
   return <main className="tv-shell">
     <header className="tv-header"><Brand dark /><div className="live"><span /> EN DIRECTO</div></header>
-    {data.phase === "HOME" && <section className="tv-home"><p className="eyebrow">NOCHE DE JUEGOS</p><h1>{data.eventName}</h1><p className="lead">Dos equipos. Retos inesperados.<br />Una noche para recordar.</p><div className="tv-teams">{data.teams.map((team, i) => <TeamCard key={team.id} team={team} number={i + 1} />)}</div><p className="tv-hint"><CircleDot size={18} /> Esperando al panel de control</p></section>}
+    {data.phase === "HOME" && <section className="tv-home"><p className="eyebrow">NOCHE DE JUEGOS</p><h1>{data.eventName}</h1><p className="lead">Dos equipos. Retos inesperados.<br />Una noche para recordar.</p><PairingCard /><div className="tv-teams">{data.teams.map((team, i) => <TeamCard key={team.id} team={team} number={i + 1} />)}</div><p className="tv-hint"><CircleDot size={18} /> Esperando al panel de control</p></section>}
     {(data.phase === "MINIGAME_WHEEL" || data.phase === "PUNISHMENT_WHEEL") && <section className="wheel-view"><p className="eyebrow">{data.phase === "PUNISHMENT_WHEEL" ? "EL DESTINO DECIDE" : "SIGUIENTE RETO"}</p><h1>{data.phase === "PUNISHMENT_WHEEL" ? "Ruleta de castigos" : "Ruleta de minijuegos"}</h1><SpinWheel items={wheelItems} selectedId={data.phase === "PUNISHMENT_WHEEL" ? data.selectedPunishmentId : data.selectedMinigameId} onFinished={holdWinningOption} isRevealing={isRevealing} /><p className={`tv-hint ${isRevealing ? "wheel-hint-reveal" : ""}`}><CircleDot size={18} /> {isRevealing ? "La opción ganadora se mantiene en pantalla…" : data.selectedMinigameId || data.selectedPunishmentId ? "La suerte está decidiendo…" : "Esperando el giro del panel"}</p></section>}
     {(data.phase === "MINIGAME_RESULT" || data.phase === "PUNISHMENT_RESULT") && activity && <section className="result-view">
       <h1>{activity.title}</h1>
@@ -71,6 +72,11 @@ function TV({ data, update }: { data: AppData; update: (next: AppData | ((state:
 }
 
 function TeamCard({ team, number }: { team: AppData["teams"][number]; number: number }) { return <article className="team-card" style={{ "--team": team.color } as React.CSSProperties}><span className="team-number">0{number}</span><span className="team-dot" /><h2>{team.name}</h2><p>¡A por todas!</p></article>; }
+
+function PairingCard() {
+  const controllerUrl = `${window.location.origin}/admin`;
+  return <aside className="pairing-card" aria-label="Conectar el móvil como mando"><div className="pairing-qr"><QRCodeSVG value={controllerUrl} size={118} level="M" includeMargin /></div><div className="pairing-copy"><p className="pairing-kicker"><Smartphone size={15} /> CONECTA EL MANDO</p><h2>Escanea con el móvil</h2><p>Abre la cámara, apunta al código y usa el panel para controlar esta pantalla en directo.</p><div className="pairing-steps"><span>1. Escanea</span><span>2. Abre el panel</span><span>3. Empieza</span></div></div><a className="pairing-link" href={controllerUrl} target="_blank" rel="noreferrer"><Tv size={16} /> Abrir panel</a></aside>;
+}
 const lightWheelPalette = ["#e7f5d6", "#fff1c9", "#d9f2ee", "#f9dfe8", "#e9e1fa", "#dceaff", "#fde6c4", "#e2f3d3", "#f5e1ce", "#dcedf6", "#f6e0f2", "#e9f0c9"];
 const wheelLabels: Record<string, string> = {
   "Teléfono escacharrado": "Teléfono roto",
@@ -112,7 +118,7 @@ function Admin({ data, update }: { data: AppData; update: (next: AppData | ((sta
   const spinPunishment = () => { const chosen = selectWithoutRepeats(data.punishments, data.usedPunishmentIds); if (!chosen) return setNotice("Activa al menos un castigo en configuración."); update(s => ({ ...s, selectedPunishmentId: chosen.id, punishments: s.punishments.map(x => x.id === chosen.id ? { ...x, enabled: false } : x), usedPunishmentIds: [...s.usedPunishmentIds, chosen.id] })); setNotice("Girando la ruleta…"); };
   const loser = teamById(data, data.losingTeamId);
   const reset = (home = false) => update(s => ({ ...s, phase: home ? "HOME" : "MINIGAME_WHEEL", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null }));
-  return <main className="admin-shell"><header className="admin-header"><Brand /><a href="/admin/configuracion" className="icon-button" aria-label="Configuración"><Settings size={20} /></a></header><section className="admin-content"><div className="admin-kicker"><span>CONTROL DE PARTIDA</span><a href="/" target="_blank">Ver televisión <ExternalLink size={14} /></a></div><h1>{phases[data.phase]}</h1><p className="admin-description">{adminCopy(data.phase, data, loser?.name)}</p>{notice && <div className="notice" role="status"><Check size={17} />{notice}<button onClick={() => setNotice("")} aria-label="Cerrar"><X size={16} /></button></div>}
+  return <main className="admin-shell"><header className="admin-header"><Brand /><div className="admin-session"><span /> TV conectada</div><a href="/admin/configuracion" className="icon-button" aria-label="Configuración"><Settings size={20} /></a></header><section className="admin-content"><div className="admin-kicker"><span>CONTROL DE PARTIDA</span><a href="/" target="_blank">Ver televisión <ExternalLink size={14} /></a></div><h1>{phases[data.phase]}</h1><p className="admin-description">{adminCopy(data.phase, data, loser?.name)}</p>{notice && <div className="notice" role="status"><Check size={17} />{notice}<button onClick={() => setNotice("")} aria-label="Cerrar"><X size={16} /></button></div>}
     <div className="stepper">{["Reto", "Perdedor", "Castigo"].map((label, i) => <div className={stepClass(data.phase, i)} key={label}><span>{i + 1}</span>{label}</div>)}</div>
     <div className="admin-card">
       {data.phase === "HOME" && <><Gamepad2 className="card-icon" /><h2>¿Listos para empezar?</h2><p>La TV mostrará la ruleta de minijuegos.</p><button className="primary-button" onClick={() => update(s => ({ ...s, phase: "MINIGAME_WHEEL", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null }))}>Empezar ronda <ChevronRight size={19} /></button></>}
