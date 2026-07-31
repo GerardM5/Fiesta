@@ -9,18 +9,15 @@ export const initialData: AppData = {
     { id: "team_2", name: "Equipo azul", color: "#4c86e8" },
   ],
   minigames: [
-    { id: "torre-vasos", title: "Torre de vasos", description: "Construid la torre más alta con los vasos que encontréis. La torre más baja pierde.", imageUrl: image("photo-1521886655570-97530a8d5dfc"), enabled: true },
-    { id: "telefono-escacharrado", title: "Teléfono escacharrado", description: "El último jugador deberá decir la frase que ha viajado por todo el equipo.", imageUrl: image("photo-1529156069898-49953e39b3ac"), enabled: true },
-    { id: "relevo-baile", title: "Relevo de baile", description: "Cada integrante añade un paso. El equipo que se equivoque primero pierde.", imageUrl: image("photo-1514525253161-7a46d19cd819"), enabled: true },
-    { id: "mimica", title: "Mímica imposible", description: "Adivinad el mayor número de palabras sin hablar antes de que el otro equipo termine.", imageUrl: image("photo-1506157786151-b8491531f063"), enabled: true },
-    { id: "categorias", title: "Categorías", description: "Elegid una categoría. Por turnos, cada equipo dice un elemento: tenéis 3 segundos y no se puede repetir.", imageUrl: image("photo-1529156069898-49953e39b3ac"), enabled: true },
-    { id: "ultima-letra", title: "Última letra", description: "Decid una palabra. El otro equipo responde con otra que empiece por la última letra de la anterior.", imageUrl: image("photo-1499750310107-5fef28a66643"), enabled: true },
-    { id: "mimica-relampago", title: "Mímica relámpago", description: "Tenéis 30 segundos para representar una película, famoso o profesión. Cada acierto cuenta.", imageUrl: image("photo-1506157786151-b8491531f063"), enabled: true },
-    { id: "acaba-cancion", title: "Acaba la canción", description: "Pon 5 segundos de una canción. El primero que continúe correctamente la letra gana.", imageUrl: image("photo-1493225457124-a3eb161ffa5f"), enabled: true },
-    { id: "dos-verdades", title: "Dos verdades y una mentira", description: "Cada jugador dice tres afirmaciones. El otro equipo debe descubrir cuál de ellas es falsa.", imageUrl: image("photo-1511988617509-a57c8a288659"), enabled: true },
-    { id: "piedra-papel-tijera", title: "Piedra, papel o tijera mundial", description: "Todos juegan a la vez. Quien pierde anima al ganador hasta que quede un campeón por equipo.", imageUrl: image("photo-1517245386807-bb43f82c33c4"), enabled: true },
-    { id: "carta-misteriosa", title: "Carta misteriosa", description: "Cada equipo saca una carta: la más alta gana. Si hay empate, jugad una segunda carta.", imageUrl: image("photo-1511193311914-0346f16efe90"), enabled: true },
-    { id: "moneda-al-vaso", title: "Moneda al vaso", description: "Cada jugador tiene un intento para meter una moneda en un vaso desde cierta distancia.", imageUrl: image("photo-1513267048331-5611cad62e41"), enabled: true },
+    { id: "palabra-espalda", title: "Palabra en la espalda", description: "Pegad una palabra en la espalda de cada rival. Gana quien diga en voz alta la palabra del otro; se vale mover al rival para verla.", imageUrl: image("photo-1517245386807-bb43f82c33c4"), enabled: true },
+    { id: "maletin", title: "El maletín", description: "Cada jugador recibe un maletín con premio o vacío. Convenced a los demás para que se queden con vuestro maletín… o no.", imageUrl: image("photo-1512418490979-92798cec1380"), enabled: true },
+    { id: "palabra-trampa", title: "La palabra trampa", description: "Por turnos, haced preguntas para lograr que el rival pronuncie vuestra palabra. Si adivina cuál es y la dice, perdéis.", imageUrl: image("photo-1456324504439-367cee3b3c32"), enabled: true },
+    { id: "sillas-musicales-cartas", title: "Sillas musicales con cartas", description: "Dad vueltas alrededor de la mesa. Cuando pare la música, coged una carta: quien se quede sin ella pierde.", imageUrl: image("photo-1511193311914-0346f16efe90"), enabled: true },
+    { id: "escalera-de-botes", title: "Escalera de botes", description: "En el tiempo marcado, encestad botes en un vaso: primero uno, después dos, luego tres… Gana quien llegue más lejos.", imageUrl: image("photo-1513558161293-cdaf765ed2fd"), enabled: true },
+    { id: "tres-en-raya-encestado", title: "Tres en raya encestando", description: "Por equipos, encestad pelotas de vuestro color en los 9 vasos para completar tres en raya.", imageUrl: image("photo-1518604666860-9ed391f76460"), enabled: true },
+    { id: "medusa", title: "La medusa", description: "Todos miran al suelo. A la señal, mirad a alguien: si os miráis mutuamente, los dos quedáis eliminados. Gana la última persona.", imageUrl: image("photo-1527529482837-4698179dc6ce"), enabled: true },
+    { id: "cronometro-a-ciegas", title: "Cronómetro a ciegas", description: "Iniciad un cronómetro y paradlo sin mirar lo más cerca posible del tiempo objetivo.", imageUrl: image("photo-1501139083538-0139583c060f"), enabled: true },
+    { id: "contar-hasta-20", title: "Contar hasta 20", description: "Contad hasta 20 sin establecer turnos. Si dos personas hablan a la vez, empezad de nuevo. Tenéis un tiempo límite.", imageUrl: image("photo-1529156069898-49953e39b3ac"), enabled: true },
   ],
   punishments: [
     { id: "chupitos", title: "Dos chupitos", description: "El equipo debe repartir dos chupitos entre sus integrantes.", imageUrl: image("photo-1513558161293-cdaf765ed2fd"), enabled: true },
@@ -30,9 +27,12 @@ export const initialData: AppData = {
   phase: "HOME", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null, usedMinigameIds: [], usedPunishmentIds: [],
 };
 
-const KEY = "doscientos-fiesta-state";
+// A new storage version resets the previously deployed game catalogue on every device.
+const KEY = "doscientos-fiesta-state-v2";
+const LEGACY_KEY = "doscientos-fiesta-state";
 export const readData = (): AppData => {
   try {
+    localStorage.removeItem(LEGACY_KEY);
     const saved = JSON.parse(localStorage.getItem(KEY) || "null");
     if (!saved) return initialData;
     const savedMinigames = Array.isArray(saved.minigames) ? saved.minigames : [];

@@ -13,7 +13,7 @@ function useGameData() {
     saveData(resolved); return resolved;
   });
   useEffect(() => {
-    const listen = (event: StorageEvent) => { if (event.key === "doscientos-fiesta-state") setData(readData()); };
+    const listen = (event: StorageEvent) => { if (event.key === "doscientos-fiesta-state-v2") setData(readData()); };
     addEventListener("storage", listen); return () => removeEventListener("storage", listen);
   }, []);
   return [data, update] as const;
