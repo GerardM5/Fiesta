@@ -54,9 +54,9 @@ El botón **Reiniciar al inicio** devuelve la partida a la pantalla inicial sin 
 
 ## Persistencia y sincronización
 
-La configuración y el estado de la partida se guardan en el almacenamiento local del navegador. Las pestañas abiertas en el mismo navegador se actualizan automáticamente.
+La partida usa una única sesión compartida en Supabase. Al abrir `/admin` en el móvil, cada acción se refleja automáticamente en `/` en la televisión u ordenador, incluso desde otra red.
 
-Esta versión no incluye backend: para sincronizar una TV y un móvil en dispositivos distintos hace falta conectar un almacenamiento compartido (por ejemplo, Supabase) y sustituir la capa de almacenamiento local.
+Para activarla, aplica `supabase/migrations/20260731000000_create_party_sessions.sql` en tu proyecto de Supabase y configura en el despliegue `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (puedes copiar `.env.example` para desarrollo local). Sin esas dos variables, la aplicación no inicia la partida: así nunca crea sesiones separadas por dispositivo.
 
 ## Compilación de producción
 

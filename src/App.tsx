@@ -1,25 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, Trash2, Trophy, X } from "lucide-react";
 import { Wheel as RouletteWheel } from "react-custom-roulette";
-import { initialData, readData, saveData, selectWithoutRepeats, teamById } from "./data";
+import { initialData, isSharedSessionConfigured, loadSharedData, saveSharedData, selectWithoutRepeats, subscribeToSharedData, teamById } from "./data";
 import type { Activity, AppData, GamePhase, TeamId } from "./types";
 
 const phases: Record<GamePhase, string> = { HOME: "Preparados", MINIGAME_WHEEL: "Eligiendo reto", MINIGAME_RESULT: "Reto listo", SELECT_LOSER: "¿Quién pierde?", LOSER_RESULT: "Equipo perdedor", PUNISHMENT_WHEEL: "Eligiendo castigo", PUNISHMENT_RESULT: "Castigo listo" };
 
 function useGameData() {
-  const [data, setData] = useState<AppData>(readData);
+  const [data, setData] = useState<AppData>(initialData);
   const update = (next: AppData | ((state: AppData) => AppData)) => setData((current) => {
     const resolved = typeof next === "function" ? next(current) : next;
-    saveData(resolved); return resolved;
+    void saveSharedData(resolved).catch((error: unknown) => console.error("No se ha podido sincronizar la partida", error));
+    return resolved;
   });
   useEffect(() => {
-    const listen = (event: StorageEvent) => { if (event.key === "doscientos-fiesta-state-v2") setData(readData()); };
-    addEventListener("storage", listen); return () => removeEventListener("storage", listen);
+    let active = true;
+    loadSharedData().then((state) => { if (active) setData(state); }).catch((error: unknown) => console.error("No se ha podido cargar la partida", error));
+    const unsubscribe = subscribeToSharedData((state) => { if (active) setData(state); });
+    return () => { active = false; unsubscribe(); };
   }, []);
   return [data, update] as const;
 }
 
 function App() {
+  if (!isSharedSessionConfigured) return <main className="tv-shell"><section className="tv-home"><p className="eyebrow">SESIÓN COMPARTIDA</p><h1>Conecta la partida</h1><p className="lead">Añade la conexión de Supabase para usar una única sesión desde el móvil y verla en tiempo real en la TV.</p></section></main>;
   const [data, update] = useGameData();
   const route = location.pathname;
   if (route === "/admin/configuracion") return <Config data={data} update={update} />;

@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import type { Activity, AppData, TeamId } from "./types";
 
 const image = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1200&q=85`;
@@ -34,21 +35,60 @@ export const initialData: AppData = {
   phase: "HOME", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null, usedMinigameIds: [], usedPunishmentIds: [],
 };
 
-// A new storage version resets the previously deployed game catalogue on every device.
-const KEY = "doscientos-fiesta-state-v2";
-const LEGACY_KEY = "doscientos-fiesta-state";
-export const readData = (): AppData => {
-  try {
-    localStorage.removeItem(LEGACY_KEY);
-    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (!saved) return initialData;
-    const savedMinigames = Array.isArray(saved.minigames) ? saved.minigames : [];
-    const missingMinigames = initialData.minigames.filter((game) => !savedMinigames.some((savedGame: Activity) => savedGame.id === game.id));
-    return { ...initialData, ...saved, minigames: [...savedMinigames, ...missingMinigames] };
-  }
-  catch { return initialData; }
+const SESSION_ID = "fiesta-principal";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// The local copy only keeps the app usable while developing without a backend.
+// Once Supabase is configured, `party_sessions` is the single source of truth.
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+export const isSharedSessionConfigured = Boolean(supabase);
+
+export const loadSharedData = async (): Promise<AppData> => {
+  if (!supabase) throw new Error("Falta configurar la sesión compartida.");
+
+  const { data: session, error } = await supabase
+    .from("party_sessions")
+    .select("state")
+    .eq("id", SESSION_ID)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (session?.state) return session.state as AppData;
+
+  const { data: created, error: createError } = await supabase
+    .from("party_sessions")
+    .upsert({ id: SESSION_ID, state: initialData }, { onConflict: "id" })
+    .select("state")
+    .single();
+
+  if (createError) throw createError;
+  return created.state as AppData;
 };
-export const saveData = (data: AppData) => localStorage.setItem(KEY, JSON.stringify(data));
+
+export const saveSharedData = async (state: AppData) => {
+  if (!supabase) throw new Error("Falta configurar la sesión compartida.");
+
+  const { error } = await supabase
+    .from("party_sessions")
+    .update({ state, updated_at: new Date().toISOString() })
+    .eq("id", SESSION_ID);
+  if (error) throw error;
+};
+
+export const subscribeToSharedData = (onChange: (state: AppData) => void) => {
+  if (!supabase) return () => undefined;
+
+  const channel = supabase
+    .channel("party-session-live")
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "party_sessions", filter: `id=eq.${SESSION_ID}` }, (payload) => {
+      const state = (payload.new as { state?: AppData }).state;
+      if (state) onChange(state);
+    })
+    .subscribe();
+
+  return () => { void supabase.removeChannel(channel); };
+};
 
 export const selectWithoutRepeats = (items: Activity[], used: string[]) => {
   const active = items.filter((item) => item.enabled);
