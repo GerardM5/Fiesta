@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, CircleDot, Dices, ExternalLink, Gamepad2, Home, PartyPopper, Pencil, Plus, RotateCcw, Settings, ShieldAlert, Trash2, Trophy, X } from "lucide-react";
 import { Wheel as RouletteWheel } from "react-custom-roulette";
 import { initialData, readData, saveData, selectWithoutRepeats, teamById } from "./data";
@@ -33,15 +33,26 @@ function Brand({ dark = false }: { dark?: boolean }) { return <a className={`bra
 function OpenAdmin() { return <a className="admin-link" href="/admin">Panel de control <ExternalLink size={15} /></a>; }
 
 function TV({ data, update }: { data: AppData; update: (next: AppData | ((state: AppData) => AppData)) => void }) {
+  const [isRevealing, setIsRevealing] = useState(false);
+  const revealTimer = useRef<number | null>(null);
   const game = data.minigames.find((x) => x.id === data.selectedMinigameId);
   const punishment = data.punishments.find((x) => x.id === data.selectedPunishmentId);
   const loser = teamById(data, data.losingTeamId);
   const wheelItems = data.phase === "PUNISHMENT_WHEEL" ? data.punishments.filter(x => x.enabled) : data.minigames.filter(x => x.enabled);
   const activity = data.phase === "PUNISHMENT_RESULT" ? punishment : game;
+  useEffect(() => () => { if (revealTimer.current !== null) window.clearTimeout(revealTimer.current); }, []);
+  useEffect(() => { if (!data.selectedMinigameId && !data.selectedPunishmentId) setIsRevealing(false); }, [data.selectedMinigameId, data.selectedPunishmentId]);
+  const holdWinningOption = () => {
+    setIsRevealing(true);
+    revealTimer.current = window.setTimeout(() => {
+      update(s => s.phase === "MINIGAME_WHEEL" ? { ...s, phase: "MINIGAME_RESULT" } : s.phase === "PUNISHMENT_WHEEL" ? { ...s, phase: "PUNISHMENT_RESULT" } : s);
+      setIsRevealing(false);
+    }, 5000);
+  };
   return <main className="tv-shell">
     <header className="tv-header"><Brand dark /><div className="live"><span /> EN DIRECTO</div></header>
     {data.phase === "HOME" && <section className="tv-home"><p className="eyebrow">NOCHE DE JUEGOS</p><h1>{data.eventName}</h1><p className="lead">Dos equipos. Retos inesperados.<br />Una noche para recordar.</p><div className="tv-teams">{data.teams.map((team, i) => <TeamCard key={team.id} team={team} number={i + 1} />)}</div><p className="tv-hint"><CircleDot size={18} /> Esperando al panel de control</p></section>}
-    {(data.phase === "MINIGAME_WHEEL" || data.phase === "PUNISHMENT_WHEEL") && <section className="wheel-view"><p className="eyebrow">{data.phase === "PUNISHMENT_WHEEL" ? "EL DESTINO DECIDE" : "SIGUIENTE RETO"}</p><h1>{data.phase === "PUNISHMENT_WHEEL" ? "Ruleta de castigos" : "Ruleta de minijuegos"}</h1><SpinWheel items={wheelItems} selectedId={data.phase === "PUNISHMENT_WHEEL" ? data.selectedPunishmentId : data.selectedMinigameId} onFinished={() => update(s => s.phase === "MINIGAME_WHEEL" ? { ...s, phase: "MINIGAME_RESULT" } : s.phase === "PUNISHMENT_WHEEL" ? { ...s, phase: "PUNISHMENT_RESULT" } : s)} /><p className="tv-hint"><CircleDot size={18} /> {data.selectedMinigameId || data.selectedPunishmentId ? "La suerte está decidiendo…" : "Esperando el giro del panel"}</p></section>}
+    {(data.phase === "MINIGAME_WHEEL" || data.phase === "PUNISHMENT_WHEEL") && <section className="wheel-view"><p className="eyebrow">{data.phase === "PUNISHMENT_WHEEL" ? "EL DESTINO DECIDE" : "SIGUIENTE RETO"}</p><h1>{data.phase === "PUNISHMENT_WHEEL" ? "Ruleta de castigos" : "Ruleta de minijuegos"}</h1><SpinWheel items={wheelItems} selectedId={data.phase === "PUNISHMENT_WHEEL" ? data.selectedPunishmentId : data.selectedMinigameId} onFinished={holdWinningOption} isRevealing={isRevealing} /><p className={`tv-hint ${isRevealing ? "wheel-hint-reveal" : ""}`}><CircleDot size={18} /> {isRevealing ? "La opción ganadora se mantiene en pantalla…" : data.selectedMinigameId || data.selectedPunishmentId ? "La suerte está decidiendo…" : "Esperando el giro del panel"}</p></section>}
     {(data.phase === "MINIGAME_RESULT" || data.phase === "PUNISHMENT_RESULT") && activity && <section className="result-view">
       {data.phase === "PUNISHMENT_RESULT" && loser && <div className="loser-pill" style={{ background: loser.color }}><ShieldAlert size={18} /> {loser.name} pierde esta ronda</div>}
       <div className="result-image"><img src={activity.imageUrl} alt="" /><span className="result-label">{data.phase === "MINIGAME_RESULT" ? "MINIJUEGO" : "CASTIGO"}</span></div>
@@ -54,11 +65,11 @@ function TV({ data, update }: { data: AppData; update: (next: AppData | ((state:
 
 function TeamCard({ team, number }: { team: AppData["teams"][number]; number: number }) { return <article className="team-card" style={{ "--team": team.color } as React.CSSProperties}><span className="team-number">0{number}</span><span className="team-dot" /><h2>{team.name}</h2><p>¡A por todas!</p></article>; }
 const wheelColors = ["#bdff7b", "#f8f6e9", "#8eb987", "#e9f5e5", "#5e8759", "#d1e8c8"];
-function SpinWheel({ items, selectedId, onFinished, compact = false }: { items: Activity[]; selectedId: string | null; onFinished: () => void; compact?: boolean }) {
+function SpinWheel({ items, selectedId, onFinished, compact = false, isRevealing = false }: { items: Activity[]; selectedId: string | null; onFinished: () => void; compact?: boolean; isRevealing?: boolean }) {
   const data = useMemo(() => items.map((item, index) => ({ option: item.title, style: { backgroundColor: wheelColors[index % wheelColors.length], textColor: index % wheelColors.length === 4 ? "#ffffff" : "#193116" } })), [items]);
   const prizeNumber = Math.max(0, items.findIndex(item => item.id === selectedId));
   if (!items.length) return <div className="wheel-empty">No hay opciones activas</div>;
-  return <div className={`roulette-wrap ${compact ? "roulette-compact" : ""}`}><RouletteWheel mustStartSpinning={Boolean(selectedId)} prizeNumber={prizeNumber} data={data} onStopSpinning={onFinished} backgroundColors={wheelColors} textColors={["#1a2e18"]} outerBorderColor="#f9fbf5" outerBorderWidth={7} innerBorderColor="#dcebd5" innerBorderWidth={5} radiusLineColor="#31512e" radiusLineWidth={2} fontFamily="Onest, sans-serif" fontSize={compact ? 11 : 18} fontWeight="700" textDistance={60} spinDuration={0.75} disableInitialAnimation /></div>;
+  return <div className={`roulette-wrap ${compact ? "roulette-compact" : ""} ${isRevealing ? "roulette-revealing" : ""}`}><RouletteWheel mustStartSpinning={Boolean(selectedId)} prizeNumber={prizeNumber} data={data} onStopSpinning={onFinished} backgroundColors={wheelColors} textColors={["#1a2e18"]} outerBorderColor="#f9fbf5" outerBorderWidth={7} innerRadius={15} innerBorderColor="#dcebd5" innerBorderWidth={5} radiusLineColor="#31512e" radiusLineWidth={2} fontFamily="Onest, sans-serif" fontSize={compact ? 11 : 18} fontWeight="700" textDistance={60} spinDuration={compact ? 0.3 : 0.6} disableInitialAnimation /></div>;
 }
 
 function Admin({ data, update }: { data: AppData; update: (next: AppData | ((state: AppData) => AppData)) => void }) {
@@ -66,18 +77,17 @@ function Admin({ data, update }: { data: AppData; update: (next: AppData | ((sta
   const go = (phase: GamePhase) => update(s => ({ ...s, phase }));
   const spinMinigame = () => { const chosen = selectWithoutRepeats(data.minigames, data.usedMinigameIds); if (!chosen) return setNotice("Activa al menos un minijuego en configuración."); update(s => ({ ...s, selectedMinigameId: chosen.id, usedMinigameIds: s.usedMinigameIds.length === s.minigames.filter(x => x.enabled).length ? [chosen.id] : [...s.usedMinigameIds, chosen.id] })); setNotice("Girando la ruleta…"); };
   const spinPunishment = () => { const chosen = selectWithoutRepeats(data.punishments, data.usedPunishmentIds); if (!chosen) return setNotice("Activa al menos un castigo en configuración."); update(s => ({ ...s, selectedPunishmentId: chosen.id, usedPunishmentIds: s.usedPunishmentIds.length === s.punishments.filter(x => x.enabled).length ? [chosen.id] : [...s.usedPunishmentIds, chosen.id] })); setNotice("Girando la ruleta…"); };
-  const finishSpin = () => update(s => s.phase === "MINIGAME_WHEEL" ? { ...s, phase: "MINIGAME_RESULT" } : s.phase === "PUNISHMENT_WHEEL" ? { ...s, phase: "PUNISHMENT_RESULT" } : s);
   const loser = teamById(data, data.losingTeamId);
   const reset = (home = false) => update(s => ({ ...s, phase: home ? "HOME" : "MINIGAME_WHEEL", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null }));
   return <main className="admin-shell"><header className="admin-header"><Brand /><a href="/admin/configuracion" className="icon-button" aria-label="Configuración"><Settings size={20} /></a></header><section className="admin-content"><div className="admin-kicker"><span>CONTROL DE PARTIDA</span><a href="/" target="_blank">Ver televisión <ExternalLink size={14} /></a></div><h1>{phases[data.phase]}</h1><p className="admin-description">{adminCopy(data.phase, data, loser?.name)}</p>{notice && <div className="notice" role="status"><Check size={17} />{notice}<button onClick={() => setNotice("")} aria-label="Cerrar"><X size={16} /></button></div>}
     <div className="stepper">{["Reto", "Perdedor", "Castigo"].map((label, i) => <div className={stepClass(data.phase, i)} key={label}><span>{i + 1}</span>{label}</div>)}</div>
     <div className="admin-card">
       {data.phase === "HOME" && <><Gamepad2 className="card-icon" /><h2>¿Listos para empezar?</h2><p>La TV mostrará la ruleta de minijuegos.</p><button className="primary-button" onClick={() => update(s => ({ ...s, phase: "MINIGAME_WHEEL", selectedMinigameId: null, selectedPunishmentId: null, losingTeamId: null }))}>Empezar ronda <ChevronRight size={19} /></button></>}
-      {data.phase === "MINIGAME_WHEEL" && <><SpinWheel compact items={data.minigames.filter(x => x.enabled)} selectedId={data.selectedMinigameId} onFinished={finishSpin} /><button className="primary-button" disabled={Boolean(data.selectedMinigameId)} onClick={spinMinigame}>{data.selectedMinigameId ? "Girando…" : "Girar ruleta"} <RotateCcw size={19} /></button><button className="text-button" onClick={() => go("HOME")}>Volver al inicio</button></>}
+      {data.phase === "MINIGAME_WHEEL" && <><SpinWheel compact items={data.minigames.filter(x => x.enabled)} selectedId={data.selectedMinigameId} onFinished={() => undefined} /><button className="primary-button" disabled={Boolean(data.selectedMinigameId)} onClick={spinMinigame}>{data.selectedMinigameId ? "Girando…" : "Girar ruleta"} <RotateCcw size={19} /></button><button className="text-button" onClick={() => go("HOME")}>Volver al inicio</button></>}
       {data.phase === "MINIGAME_RESULT" && <ActionCard label={data.minigames.find(x => x.id === data.selectedMinigameId)?.title ?? "Minijuego"} image={data.minigames.find(x => x.id === data.selectedMinigameId)?.imageUrl} button="Seleccionar perdedor" onClick={() => go("SELECT_LOSER")} />}
       {data.phase === "SELECT_LOSER" && <><h2>Elige el equipo perdedor</h2><div className="loser-buttons">{data.teams.map(t => <button key={t.id} onClick={() => update(s => ({ ...s, losingTeamId: t.id, phase: "LOSER_RESULT" }))} style={{ "--team": t.color } as React.CSSProperties}><span style={{ background: t.color }}>{t.name.slice(0, 1)}</span>Ha perdido {t.name}</button>)}</div></>}
       {data.phase === "LOSER_RESULT" && loser && <><div className="picked-loser" style={{ borderColor: loser.color }}><span style={{ background: loser.color }}>{loser.name.slice(0, 1)}</span><h2>{loser.name}</h2><p>El castigo está esperando.</p></div><button className="primary-button" onClick={() => go("PUNISHMENT_WHEEL")}>Ir a la ruleta <ChevronRight size={19} /></button></>}
-      {data.phase === "PUNISHMENT_WHEEL" && <><SpinWheel compact items={data.punishments.filter(x => x.enabled)} selectedId={data.selectedPunishmentId} onFinished={finishSpin} /><button className="primary-button" disabled={Boolean(data.selectedPunishmentId)} onClick={spinPunishment}>{data.selectedPunishmentId ? "Girando…" : "Girar ruleta"} <RotateCcw size={19} /></button></>}
+      {data.phase === "PUNISHMENT_WHEEL" && <><SpinWheel compact items={data.punishments.filter(x => x.enabled)} selectedId={data.selectedPunishmentId} onFinished={() => undefined} /><button className="primary-button" disabled={Boolean(data.selectedPunishmentId)} onClick={spinPunishment}>{data.selectedPunishmentId ? "Girando…" : "Girar ruleta"} <RotateCcw size={19} /></button></>}
       {data.phase === "PUNISHMENT_RESULT" && <ActionCard label={data.punishments.find(x => x.id === data.selectedPunishmentId)?.title ?? "Castigo"} image={data.punishments.find(x => x.id === data.selectedPunishmentId)?.imageUrl} button="Nueva ronda" onClick={() => reset()} />}
     </div><button className="reset-button" onClick={() => reset(true)}><Home size={16} /> Reiniciar al inicio</button>
   </section></main>;
