@@ -18,6 +18,13 @@ export const initialData: AppData = {
     { id: "medusa", title: "La medusa", description: "Todos miran al suelo. A la señal, mirad a alguien: si os miráis mutuamente, los dos quedáis eliminados. Gana la última persona.", imageUrl: image("photo-1527529482837-4698179dc6ce"), enabled: true },
     { id: "cronometro-a-ciegas", title: "Cronómetro a ciegas", description: "Iniciad un cronómetro y paradlo sin mirar lo más cerca posible del tiempo objetivo.", imageUrl: image("photo-1501139083538-0139583c060f"), enabled: true },
     { id: "contar-hasta-20", title: "Contar hasta 20", description: "Contad hasta 20 sin establecer turnos. Si dos personas hablan a la vez, empezad de nuevo. Tenéis un tiempo límite.", imageUrl: image("photo-1529156069898-49953e39b3ac"), enabled: true },
+    { id: "flip-cup-equipos", title: "Flip Cup por equipos", description: "Por equipos, bebed y voltead los vasos en cadena. El primero que termine gana; el otro equipo bebe.", imageUrl: image("photo-1513558161293-cdaf765ed2fd"), enabled: true },
+    { id: "carrera-de-chupitos", title: "Carrera de chupitos", description: "Cada jugador bebe su chupito, corre hasta el punto marcado y vuelve para dar el relevo. Gana el equipo más rápido.", imageUrl: image("photo-1531525645387-7f14be1bdbbd"), enabled: true },
+    { id: "verdadero-o-falso", title: "Verdadero o falso", description: "Escuchad una frase y decidid si es verdadera o falsa. El equipo que falle, bebe.", imageUrl: image("photo-1516321318423-f06f85e504b3"), enabled: true },
+    { id: "charadas-con-castigo", title: "Charadas con castigo", description: "Representad una palabra o frase sin hablar. Si el equipo no acierta a tiempo, todos beben.", imageUrl: image("photo-1506157786151-b8491531f063"), enabled: true },
+    { id: "yo-nunca-equipos", title: "Yo nunca… por equipos", description: "Decid “Yo nunca…” y contad cuántas personas de cada equipo lo han hecho. Bebe el equipo con más o menos, según la regla elegida.", imageUrl: image("photo-1511988617509-a57c8a288659"), enabled: true },
+    { id: "piedra-papel-tijera-cadena", title: "Piedra, papel o tijera en cadena", description: "Enfrentaos uno contra uno. Quien pierde bebe y sale. Gana el equipo que elimine a todos los rivales.", imageUrl: image("photo-1517245386807-bb43f82c33c4"), enabled: true },
+    { id: "categorias", title: "Categorías", description: "Elegid una categoría y decid palabras por turnos. Quien repita, se quede en blanco o tarde demasiado, bebe.", imageUrl: image("photo-1529156069898-49953e39b3ac"), enabled: true },
   ],
   punishments: [
     { id: "chupitos", title: "Dos chupitos", description: "El equipo debe repartir dos chupitos entre sus integrantes.", imageUrl: image("photo-1513558161293-cdaf765ed2fd"), enabled: true },
